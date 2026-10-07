@@ -482,3 +482,28 @@
     color: #818cf8;
     font-weight: 600;
 }
+
+.ngg-drone-quick-upload {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(99, 102, 241, 0.9);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.ngg-drone-quick-upload:hover {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(79, 70, 229, 1);
+}

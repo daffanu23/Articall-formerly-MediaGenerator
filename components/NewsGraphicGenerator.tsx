@@ -157,7 +157,13 @@ export default function NewsGraphicGenerator() {
     const activePage = pages.find(p => p.id === activePageId) || pages[0];
 
     const [aiPrompt, setAiPrompt] = useState('');
+    const [aiSlideCount, setAiSlideCount] = useState('auto');
+    const [aiWordCount, setAiWordCount] = useState('sedang');
+    const [aiContext, setAiContext] = useState('');
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+    
+    // Global state untuk logo kustom
+    const [customLogo, setCustomLogo] = useState<string | null>(null);
 
     const updatePage = (key: string, value: any) => {
         setPages(prev => prev.map(p => p.id === activePageId ? { ...p, [key]: value } : p));
@@ -213,7 +219,7 @@ export default function NewsGraphicGenerator() {
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: aiPrompt })
+                body: JSON.stringify({ prompt: aiPrompt, slideCount: aiSlideCount, wordCount: aiWordCount, context: aiContext })
             });
 
             if (!response.ok) {
@@ -247,14 +253,14 @@ export default function NewsGraphicGenerator() {
                     bgPosX: 50,
                     bgPosY: 50,
                     textPosition: 'bottom',
-                    html: `<p>${content}</p>`
+                    html: `<p style="text-align: justify">${content}</p>`
                 });
             });
 
             // 3. Outro
             newPages.push({
                 ...pages.find(p => p.id === 'outro'),
-                html: `<p>${data.outro}</p>`
+                html: `<p style="text-align: justify">${data.outro}</p>`
             });
 
             setPages(newPages);
@@ -327,12 +333,34 @@ export default function NewsGraphicGenerator() {
         }
     };
 
+    const handleQuickUpload = (e: React.ChangeEvent<HTMLInputElement>, pageId: string) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setPages(prev => prev.map(p => p.id === pageId ? { ...p, image: event.target?.result, bgType: 'image' } : p));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
                 updatePage('qrImage', event.target?.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleGlobalLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setCustomLogo(event.target?.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -415,7 +443,17 @@ export default function NewsGraphicGenerator() {
                     <Sparkles className="text-yellow-400" />
                     <h2 className="text-2xl font-bold">AI Media Auto-Generator</h2>
                 </div>
-                <p className="text-indigo-200 mb-4 text-sm">Tempelkan teks artikel berita yang panjang, dan AI akan merangkum serta menyusunnya menjadi slide carousel Instagram secara otomatis.</p>
+                
+                {pages.length > 3 ? (
+                    <div className="bg-green-500/20 border border-green-400 text-green-100 p-4 rounded-xl mb-4 text-sm flex items-start gap-3">
+                        <Sparkles className="text-green-400 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <strong>Teks Berhasil Dibuat!</strong> Sekarang perhatikan bagian "Semua Halaman" di bawah. Klik tombol <strong className="text-white bg-indigo-500 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mx-1 text-xs"><Upload size={12}/>+</strong> pada setiap halaman untuk mengunggah gambar latar secara cepat.
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-indigo-200 mb-4 text-sm">Tempelkan teks artikel berita yang panjang, dan AI akan merangkum serta menyusunnya menjadi slide carousel Instagram secara otomatis.</p>
+                )}
 
                 <textarea
                     className="w-full h-32 p-4 rounded-xl bg-indigo-950/50 border border-indigo-500 text-white placeholder-indigo-400 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
@@ -423,11 +461,52 @@ export default function NewsGraphicGenerator() {
                     value={aiPrompt}
                     onChange={e => setAiPrompt(e.target.value)}
                 />
+                <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                    <div className="w-full sm:w-auto">
+                        <label className="block text-indigo-300 text-sm font-semibold mb-2">Target Jumlah Slide (Isi):</label>
+                        <select 
+                            value={aiSlideCount}
+                            onChange={(e) => setAiSlideCount(e.target.value)}
+                            className="w-full sm:w-auto bg-indigo-900 border border-indigo-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        >
+                            <option value="auto">Auto (Disesuaikan AI)</option>
+                            <option value="2">2 Slide</option>
+                            <option value="3">3 Slide</option>
+                            <option value="4">4 Slide</option>
+                            <option value="5">5 Slide</option>
+                            <option value="6">6 Slide</option>
+                        </select>
+                    </div>
+
+                    <div className="w-full sm:w-auto">
+                        <label className="block text-indigo-300 text-sm font-semibold mb-2">Kepadatan Teks per Slide:</label>
+                        <select 
+                            value={aiWordCount}
+                            onChange={(e) => setAiWordCount(e.target.value)}
+                            className="w-full sm:w-auto bg-indigo-900 border border-indigo-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        >
+                            <option value="singkat">Singkat (20-30 kata)</option>
+                            <option value="sedang">Sedang (40-50 kata)</option>
+                            <option value="panjang">Panjang (60-80 kata)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <label className="block text-indigo-300 text-sm font-semibold mb-2">Konteks / Sudut Pandang Tambahan (Opsional):</label>
+                    <textarea
+                        className="w-full h-16 p-3 rounded-xl bg-indigo-950/50 border border-indigo-500 text-white placeholder-indigo-400 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none text-sm"
+                        placeholder="Contoh: Buat dengan gaya bahasa Gen-Z yang santai, atau fokuskan pada dampak ekonomi..."
+                        value={aiContext}
+                        onChange={e => setAiContext(e.target.value)}
+                    />
+                </div>
+
                 <div className="mt-4 flex justify-end">
                     <button
                         onClick={handleGenerateAi}
                         disabled={isGeneratingAi}
-                        className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white px-6 py-3 rounded-full font-bold transition-all shadow-lg disabled:opacity-50"
+                        className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white px-6 py-3 rounded-full font-bold transition-all shadow-lg disabled:opacity-50"
                     >
                         {isGeneratingAi ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
                         {isGeneratingAi ? 'AI Sedang Bekerja...' : 'Generate Layout dengan AI'}
@@ -485,10 +564,10 @@ export default function NewsGraphicGenerator() {
                                     style={{ opacity: (activePage.overlayStrength !== undefined ? activePage.overlayStrength : 85) / 100 }}
                                 ></div>
 
-                                {activePage.showLogo !== false && !isLogoCollision && (
+                                {activePage.showLogo !== false && !isLogoCollision && customLogo && (
                                     <img
-                                        src="/logo_ukpm_civitas.png"
-                                        alt="Logo Civitas"
+                                        src={customLogo}
+                                        alt="Logo Kustom"
                                         style={{
                                             position: 'absolute',
                                             width: '135px',
@@ -572,10 +651,10 @@ export default function NewsGraphicGenerator() {
                                         zIndex: 2
                                     }}
                                 >
-                                    {activePage.showLogo !== false && isLogoCollision && (
+                                    {activePage.showLogo !== false && isLogoCollision && customLogo && (
                                         <img
-                                            src="/logo_ukpm_civitas.png"
-                                            alt="Logo Civitas"
+                                            src={customLogo}
+                                            alt="Logo Kustom"
                                             style={{
                                                 width: '135px',
                                                 filter: 'drop-shadow(0px 3px 6px rgba(0,0,0,0.7))',
@@ -623,6 +702,27 @@ export default function NewsGraphicGenerator() {
                                             <div className="ngg-drone-item-overlay"></div>
                                             <div className="ngg-drone-number">{index + 1}</div>
                                             {isSelected && <div className="ngg-drone-active-ring"></div>}
+                                            
+                                            {/* Quick Upload Button directly on thumbnail */}
+                                            {page.bgType === 'image' && !page.image && (
+                                                <>
+                                                    <label 
+                                                        htmlFor={`quick-upload-${page.id}`} 
+                                                        className="ngg-drone-quick-upload"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        title="Upload Gambar Cepat"
+                                                    >
+                                                        <Plus size={20} />
+                                                    </label>
+                                                    <input 
+                                                        type="file" 
+                                                        id={`quick-upload-${page.id}`} 
+                                                        style={{ display: 'none' }} 
+                                                        accept="image/*"
+                                                        onChange={(e) => handleQuickUpload(e, page.id)} 
+                                                    />
+                                                </>
+                                            )}
                                         </div>
                                         <div className="ngg-drone-label text-gray-300">{page.title}</div>
                                     </div>
@@ -635,6 +735,29 @@ export default function NewsGraphicGenerator() {
                 <div className="ngg-sidebar">
                     <div className="ngg-card bg-white/5 border-white/10 backdrop-blur-xl text-white">
                         <h2 className="ngg-title text-white">Pengaturan Grafis</h2>
+
+                        <div className="ngg-form-group">
+                            <label className="text-gray-300"><ImageIcon size={16} /> Logo Header (Opsional)</label>
+                            <div className="ngg-upload-area">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    id="global-logo-upload"
+                                    onChange={handleGlobalLogoUpload}
+                                />
+                                <label htmlFor="global-logo-upload" className="ngg-upload-btn bg-gray-800 border-gray-600 hover:bg-gray-700" style={{ marginBottom: customLogo ? '8px' : '0' }}>
+                                    <Upload size={18} /> {customLogo ? "Ganti Logo" : "Upload Logo Header"}
+                                </label>
+                                {customLogo && (
+                                    <button 
+                                        onClick={() => setCustomLogo(null)} 
+                                        className="text-red-400 text-sm hover:text-red-300 w-full text-center mt-2 flex items-center justify-center gap-1"
+                                    >
+                                        <Trash2 size={14} /> Hapus Logo
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
                         <div className="ngg-form-group">
                             <label className="text-gray-300"><LayoutTemplate size={16} /> Pilih Halaman</label>
@@ -693,6 +816,30 @@ export default function NewsGraphicGenerator() {
                                 >
                                     Bawah
                                 </button>
+                            </div>
+                        </div>
+
+                        <div className="ngg-form-group">
+                            <label className="text-gray-300"><LayoutTemplate size={16} /> Posisi Logo</label>
+                            <div className="ngg-position-buttons border-gray-600" style={{ marginBottom: '8px' }}>
+                                <button
+                                    className={`ngg-pos-btn bg-gray-800 text-gray-300 border-gray-600 ${activePage.logoPosition === 'top-left' ? 'bg-indigo-600 text-white' : ''}`}
+                                    onClick={() => updatePage('logoPosition', 'top-left')}
+                                >Atas Kiri</button>
+                                <button
+                                    className={`ngg-pos-btn bg-gray-800 text-gray-300 border-gray-600 ${activePage.logoPosition === 'top-right' ? 'bg-indigo-600 text-white' : ''}`}
+                                    onClick={() => updatePage('logoPosition', 'top-right')}
+                                >Atas Kanan</button>
+                            </div>
+                            <div className="ngg-position-buttons border-gray-600">
+                                <button
+                                    className={`ngg-pos-btn bg-gray-800 text-gray-300 border-gray-600 ${activePage.logoPosition === 'bottom-left' ? 'bg-indigo-600 text-white' : ''}`}
+                                    onClick={() => updatePage('logoPosition', 'bottom-left')}
+                                >Bawah Kiri</button>
+                                <button
+                                    className={`ngg-pos-btn bg-gray-800 text-gray-300 border-gray-600 ${activePage.logoPosition === 'bottom-right' ? 'bg-indigo-600 text-white' : ''}`}
+                                    onClick={() => updatePage('logoPosition', 'bottom-right')}
+                                >Bawah Kanan</button>
                             </div>
                         </div>
 

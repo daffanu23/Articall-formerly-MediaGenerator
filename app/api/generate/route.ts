@@ -3,15 +3,35 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 
-// Schema JSON yang kita harapkan dari AI
-const MediaSchema = z.object({
-  cover: z.string().describe("Judul berita clickbait (hook) yang sangat menarik, singkat (maksimal 7 kata), gunakan tag <br> untuk pindah baris agar layoutnya bagus. HURUF KAPITAL SEMUA."),
-  contents: z.array(z.string()).describe("Array berisi ringkasan berita. Buatlah maksimal 4 halaman (elemen array). Tiap halaman berisi teks ringkasan berita maksimal 2 kalimat pendek agar nyaman dibaca di Instagram."),
-  outro: z.string().describe("Kalimat penutup yang merangkum berita atau Call to Action (ajakan membaca) ke website.")
-});
+function getMediaSchema(slideCount: string, wordCount: string) {
+  const slideInstruction = slideCount === 'auto' 
+    ? "Buatlah jumlah slide sesuai kebutuhan (ideal 3-6 elemen array)." 
+    : `Buatlah TEPAT ${slideCount} slide/elemen array (tidak boleh kurang atau lebih).`;
+
+  let wordCountInstruction = "";
+  if (wordCount === 'singkat') {
+    wordCountInstruction = "Tiap slide (elemen) WAJIB berisi sekitar 20-30 kata (1-2 kalimat). Cocok untuk gaya tulisan yang cepat dan sangat ringkas.";
+  } else if (wordCount === 'sedang') {
+    wordCountInstruction = "Tiap slide (elemen) WAJIB berisi sekitar 40-50 kata (3-4 kalimat). Ini adalah ukuran optimal untuk mengisi 40% porsi layar agar tidak terlihat terlalu kosong namun tetap nyaman dibaca.";
+  } else if (wordCount === 'panjang') {
+    wordCountInstruction = "Tiap slide (elemen) WAJIB berisi sekitar 60-80 kata (1 paragraf padat). Teks harus cukup padat untuk memenuhi 60-70% layar slide.";
+  } else {
+    wordCountInstruction = "Tiap slide (elemen) WAJIB berisi tulisan yang cukup panjang (sekitar 4-5 baris kalimat atau 1 paragraf padat) untuk mengisi 40% porsi teks di layar.";
+  }
+
+  return z.object({
+    cover: z.string().describe("Judul berita clickbait (hook) yang sangat menarik, singkat (maksimal 7 kata), gunakan tag <br> untuk pindah baris agar layoutnya bagus. HURUF KAPITAL SEMUA."),
+    contents: z.array(z.string()).describe(`Array berisi isi berita. ${slideInstruction} INSTRUKSI KEPADATAN TEKS: ${wordCountInstruction}`),
+    outro: z.string().describe("Kalimat penutup yang merangkum berita atau Call to Action (ajakan membaca) ke website.")
+  });
+}
 
 const SYSTEM_PROMPT = `Kamu adalah Editor Senior Media Sosial yang ahli merangkum berita panjang menjadi format Microblog / Carousel Instagram yang viral dan informatif. 
-Tugasmu: Rangkum artikel berita berikut dan pecah menjadi format JSON sesuai skema yang diminta. Buat bahasanya lugas, tidak bertele-tele, dan kekinian.`;
+Tugasmu: Rangkum artikel berita berikut dan pecah menjadi format JSON sesuai skema yang diminta. Buat bahasanya lugas, tidak bertele-tele.
+
+ATURAN PALING KRUSIAL (GROUNDING):
+1. Hasil rangkuman HANYA BOLEH berasal dari teks artikel berita yang dikirimkan.
+2. DILARANG KERAS berasumsi, menduga-duga, atau menambahkan informasi/fakta fiktif dari luar artikel (NO HALLUCINATION). Jika informasi tidak ada di dalam artikel, jangan ditulis.`;
 
 // Model resmi yang aktif saat ini sesuai anjuran Google API
 const MODELS = [
@@ -19,17 +39,24 @@ const MODELS = [
   'gemini-3.5-flash-lite',
 ];
 
-async function tryGenerate(prompt: string) {
+async function tryGenerate(prompt: string, slideCount: string, wordCount: string, context: string) {
   let lastError: any = null;
+  const currentSchema = getMediaSchema(slideCount, wordCount);
+
+  let finalPrompt = `${SYSTEM_PROMPT}\n\n`;
+  if (context && context.trim() !== '') {
+    finalPrompt += `SUDUT PANDANG / KONTEKS TAMBAHAN DARI USER:\n"${context.trim()}"\n\n(Tulis rangkuman berita ini dengan menyesuaikan sudut pandang/konteks di atas tanpa melanggar aturan grounding).\n\n`;
+  }
+  finalPrompt += `Berikut adalah teks beritanya:\n"${prompt}"`;
 
   for (const modelName of MODELS) {
     try {
-      console.log(`Trying model: ${modelName}...`);
+      console.log(`Trying model: ${modelName} with slideCount: ${slideCount}, wordCount: ${wordCount}...`);
 
       const result = await generateObject({
         model: google(modelName),
-        schema: MediaSchema,
-        prompt: `${SYSTEM_PROMPT}\n\nBerikut adalah teks beritanya:\n"${prompt}"`,
+        schema: currentSchema,
+        prompt: finalPrompt,
         temperature: 0.7,
       });
 
@@ -58,8 +85,8 @@ async function tryGenerate(prompt: string) {
   try {
     const result = await generateObject({
       model: google('gemini-3.5-flash-lite'),
-      schema: MediaSchema,
-      prompt: `${SYSTEM_PROMPT}\n\nBerikut adalah teks beritanya:\n"${prompt}"`,
+      schema: currentSchema,
+      prompt: finalPrompt,
       temperature: 0.7,
     });
     return result.object;
@@ -70,7 +97,7 @@ async function tryGenerate(prompt: string) {
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, slideCount = 'auto', wordCount = 'sedang', context = '' } = await req.json();
 
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -81,7 +108,7 @@ export async function POST(req: Request) {
     }
 
     console.log('Starting AI generation with fallback models...');
-    const result = await tryGenerate(prompt);
+    const result = await tryGenerate(prompt, slideCount, wordCount, context);
     console.log('AI Generation Complete!');
 
     return NextResponse.json(result);
