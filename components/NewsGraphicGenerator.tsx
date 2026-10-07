@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
-import { Download, Upload, Image as ImageIcon, Type, LayoutTemplate, Bold, Italic, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading1, Heading2, MoveVertical, Blend, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { Download, Upload, Image as ImageIcon, Type, LayoutTemplate, Bold, Italic, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading1, Heading2, MoveVertical, Blend, Plus, Trash2, Sparkles, Loader2, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextAlign } from '@tiptap/extension-text-align';
@@ -164,6 +164,64 @@ export default function NewsGraphicGenerator() {
     
     // Global state untuk logo kustom
     const [customLogo, setCustomLogo] = useState<string | null>(null);
+
+    // State untuk Drag and Drop di Drone View
+    const [draggedPageIndex, setDraggedPageIndex] = useState<number | null>(null);
+
+    const handleDragStart = (index: number) => {
+        setDraggedPageIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault(); 
+    };
+
+    const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedPageIndex === null || draggedPageIndex === targetIndex) return;
+
+        // Cegah memindahkan cover atau outro, dan cegah menjatuhkan ke posisi cover/outro
+        if (
+            draggedPageIndex === 0 || 
+            draggedPageIndex === pages.length - 1 ||
+            targetIndex === 0 || 
+            targetIndex === pages.length - 1
+        ) {
+            setDraggedPageIndex(null);
+            return;
+        }
+
+        const newPages = [...pages];
+        const [draggedPage] = newPages.splice(draggedPageIndex, 1);
+        newPages.splice(targetIndex, 0, draggedPage);
+        
+        setPages(newPages);
+        setDraggedPageIndex(null);
+    };
+
+    const movePageOrderLeft = () => {
+        const currentIndex = pages.findIndex(p => p.id === activePageId);
+        // Tidak bisa pindah jika ini cover (0) atau jika ini halaman 2 (1) karena 0 harus selalu cover
+        if (currentIndex > 1) {
+            const newPages = [...pages];
+            const temp = newPages[currentIndex];
+            newPages[currentIndex] = newPages[currentIndex - 1];
+            newPages[currentIndex - 1] = temp;
+            setPages(newPages);
+        }
+    };
+
+    const movePageOrderRight = () => {
+        const currentIndex = pages.findIndex(p => p.id === activePageId);
+        // Tidak bisa pindah ke kanan jika ini outro (akhir) atau jika ini sebelum outro karena outro harus di akhir
+        if (currentIndex > 0 && currentIndex < pages.length - 2) {
+            const newPages = [...pages];
+            const temp = newPages[currentIndex];
+            newPages[currentIndex] = newPages[currentIndex + 1];
+            newPages[currentIndex + 1] = temp;
+            setPages(newPages);
+        }
+    };
 
     const updatePage = (key: string, value: any) => {
         setPages(prev => prev.map(p => p.id === activePageId ? { ...p, [key]: value } : p));
@@ -522,7 +580,30 @@ export default function NewsGraphicGenerator() {
                             if (window.innerWidth < 768) window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                     >
-                        <h2 className="ngg-title text-white">Live Preview (Resolusi 1080x1350)</h2>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h2 className="ngg-title text-white mb-0">
+                                Live Preview <span className="text-indigo-400 font-normal text-lg ml-2">— Slide {pages.findIndex(p => p.id === activePageId) + 1} dari {pages.length}</span>
+                            </h2>
+                            <div className="flex gap-2 items-center bg-black/20 border border-white/10 rounded-lg p-1.5 shadow-inner">
+                                <span className="text-gray-400 text-xs font-semibold px-2">Geser Urutan Slide:</span>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); movePageOrderLeft(); }}
+                                    disabled={pages.findIndex(p => p.id === activePageId) <= 1}
+                                    title="Tukar posisi dengan halaman sebelumnya"
+                                    className="flex items-center gap-1 bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+                                >
+                                    <ArrowLeft size={14} /> Ke Urutan {pages.findIndex(p => p.id === activePageId) > 1 ? pages.findIndex(p => p.id === activePageId) : '-'}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); movePageOrderRight(); }}
+                                    disabled={pages.findIndex(p => p.id === activePageId) === 0 || pages.findIndex(p => p.id === activePageId) >= pages.length - 2}
+                                    title="Tukar posisi dengan halaman selanjutnya"
+                                    className="flex items-center gap-1 bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+                                >
+                                    Ke Urutan {pages.findIndex(p => p.id === activePageId) > 0 && pages.findIndex(p => p.id === activePageId) < pages.length - 2 ? pages.findIndex(p => p.id === activePageId) + 2 : '-'} <ArrowRight size={14} />
+                                </button>
+                            </div>
+                        </div>
                         <div ref={wrapperRef} style={{ width: '100%' }}></div>
 
                         <div
@@ -530,9 +611,11 @@ export default function NewsGraphicGenerator() {
                             style={{
                                 width: `${1080 * scale}px`,
                                 height: `${1350 * scale}px`,
-                                margin: '0 auto'
+                                margin: '0 auto',
+                                position: 'relative'
                             }}
                         >
+
                             <div
                                 ref={previewRef}
                                 className={`ngg-preview-canvas pos-${activePage.textPosition}`}
@@ -681,13 +764,18 @@ export default function NewsGraphicGenerator() {
                                 return (
                                     <div
                                         key={page.id}
-                                        className={`ngg-drone-item ${isSelected ? 'active' : ''}`}
+                                        draggable={page.id !== 'cover' && page.id !== 'outro'}
+                                        onDragStart={() => handleDragStart(index)}
+                                        onDragOver={(e) => handleDragOver(e, index)}
+                                        onDrop={(e) => handleDrop(e, index)}
+                                        className={`ngg-drone-item ${isSelected ? 'active' : ''} ${draggedPageIndex === index ? 'opacity-50' : ''} ${page.id === 'cover' || page.id === 'outro' ? 'cursor-not-allowed' : 'cursor-move'}`}
                                         onClick={() => setActivePageId(page.id)}
-                                        title={page.title}
+                                        title={page.id === 'cover' ? 'Cover Depan (Posisi Terkunci)' : page.id === 'outro' ? 'Outro (QR) (Posisi Terkunci)' : `Isi Berita ${index}`}
                                     >
                                         <div className="ngg-drone-thumbnail">
                                             {page.bgType === 'image' && page.image ? (
                                                 <div style={{
+                                                    position: 'absolute',
                                                     width: '100%', height: '100%',
                                                     backgroundImage: `url(${page.image})`,
                                                     backgroundSize: 'cover',
@@ -695,10 +783,45 @@ export default function NewsGraphicGenerator() {
                                                 }}></div>
                                             ) : (
                                                 <div style={{
+                                                    position: 'absolute',
                                                     width: '100%', height: '100%',
                                                     backgroundColor: page.bgColor || '#1e293b'
                                                 }}></div>
                                             )}
+                                            
+                                            {/* Gradient Overlay for Text Readability */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 0, left: 0, right: 0, bottom: 0,
+                                                background: page.textPosition === 'bottom' 
+                                                    ? 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)' 
+                                                    : page.textPosition === 'top' 
+                                                        ? 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)' 
+                                                        : 'radial-gradient(circle at center, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 100%)',
+                                                opacity: (page.overlayStrength !== undefined ? page.overlayStrength : 85) / 100
+                                            }}></div>
+
+                                            {/* Scaled down text */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 0, left: 0, right: 0, bottom: 0,
+                                                padding: '6px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: page.textPosition === 'bottom' ? 'flex-end' : page.textPosition === 'top' ? 'flex-start' : 'center',
+                                                overflow: 'hidden',
+                                                pointerEvents: 'none'
+                                            }}>
+                                                <div 
+                                                    className="tiptap-output"
+                                                    style={{
+                                                        width: '1080px',
+                                                        transform: 'scale(0.081)', // 100px (thumb width) / 1080px (original width) minus padding
+                                                        transformOrigin: page.textPosition === 'bottom' ? 'bottom left' : page.textPosition === 'top' ? 'top left' : 'center left',
+                                                    }}
+                                                    dangerouslySetInnerHTML={{ __html: page.html }}
+                                                />
+                                            </div>
                                             <div className="ngg-drone-item-overlay"></div>
                                             <div className="ngg-drone-number">{index + 1}</div>
                                             {isSelected && <div className="ngg-drone-active-ring"></div>}
@@ -724,7 +847,9 @@ export default function NewsGraphicGenerator() {
                                                 </>
                                             )}
                                         </div>
-                                        <div className="ngg-drone-label text-gray-300">{page.title}</div>
+                                        <div className="ngg-drone-label text-gray-300">
+                                            {page.id === 'cover' ? 'Cover Depan' : page.id === 'outro' ? 'Outro (QR)' : `Isi Berita ${index}`}
+                                        </div>
                                     </div>
                                 );
                             })}
