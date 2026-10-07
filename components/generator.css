@@ -1,0 +1,484 @@
+.ngg-container {
+    display: flex;
+    flex-direction: column; 
+    gap: 0;
+    width: 100%;
+    --bg: #0f172a;
+    --bg-light: #1e293b;
+    --border: #334155;
+    --border-muted: #475569;
+    --text: #f8fafc;
+    --text-muted: #cbd5e1;
+}
+
+@media (min-width: 768px) {
+    .ngg-container {
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 24px;
+    }
+}
+
+.ngg-sidebar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    z-index: 10;
+    margin-top: -40px;
+    padding-top: 16px;
+}
+
+@media (min-width: 768px) {
+    .ngg-sidebar {
+        width: 350px;
+        flex-shrink: 0;
+        margin-top: 0;
+        padding-top: 0;
+    }
+}
+
+.ngg-preview-area {
+    flex-grow: 1;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1; 
+    padding-bottom: 60px;
+}
+
+@media (min-width: 768px) {
+    .ngg-preview-area {
+        position: static;
+        padding-bottom: 0;
+    }
+}
+
+.ngg-card {
+    background-color: var(--bg-light);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+}
+
+@media (max-width: 767px) {
+    .ngg-sidebar .ngg-card:first-child {
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.ngg-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+    margin-top: 0;
+}
+
+.ngg-form-group {
+    margin-bottom: 20px;
+}
+
+.ngg-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.ngg-upload-area {
+    width: 100%;
+}
+
+.ngg-upload-area input[type="file"] {
+    display: none;
+}
+
+.ngg-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    background-color: var(--bg);
+    border: 2px dashed var(--border-muted);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ngg-upload-btn:hover {
+    background-color: var(--border-muted);
+    color: var(--text);
+}
+
+.ngg-select,
+.ngg-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    background-color: var(--bg-light);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.ngg-select:focus,
+.ngg-form-group textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.ngg-position-buttons {
+    display: flex;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.ngg-pos-btn {
+    flex: 1;
+    background: var(--bg-light);
+    color: var(--text-muted);
+    border: none;
+    padding: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-right: 1px solid var(--border);
+}
+.ngg-pos-btn:last-child {
+    border-right: none;
+}
+.ngg-pos-btn:hover {
+    background: var(--bg);
+    color: var(--text);
+}
+.ngg-pos-btn.active {
+    background: #6366f1;
+    color: white;
+}
+
+.ngg-editor-wrapper {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-light);
+    transition: border-color 0.2s;
+}
+.ngg-editor-wrapper:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+.ngg-editor-menubar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.ngg-editor-menubar button {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    font-weight: bold;
+}
+.ngg-editor-menubar button:hover {
+    background: var(--border-muted);
+    color: var(--text);
+}
+.ngg-editor-menubar button.is-active {
+    background: #6366f1;
+    color: white;
+}
+.ngg-editor-menubar .divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+}
+.ngg-editor-menubar .color-picker {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+}
+.ngg-editor-content .ProseMirror {
+    min-height: 150px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 16px;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background-color: transparent;
+    color: var(--text);
+}
+.ngg-editor-content .ProseMirror p { margin: 0 0 10px 0; }
+.ngg-editor-content .ProseMirror h1 { margin: 0 0 10px 0; font-size: 1.5rem; }
+.ngg-editor-content .ProseMirror h2 { margin: 0 0 10px 0; font-size: 1.25rem; }
+
+.ngg-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.ngg-export-btn:disabled {
+    background-color: #475569;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.ngg-preview-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 767px) {
+    .ngg-preview-wrapper {
+        cursor: pointer;
+    }
+}
+
+.ngg-preview-container {
+    width: 100%;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    background-color: var(--bg);
+}
+
+.ngg-preview-canvas {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    display: flex;
+}
+
+.ngg-placeholder-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.ngg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    transition: background 0.3s ease;
+}
+
+.ngg-preview-canvas.pos-bottom { align-items: flex-end; }
+.ngg-preview-canvas.pos-bottom .ngg-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+}
+
+.ngg-preview-canvas.pos-top { align-items: flex-start; }
+.ngg-preview-canvas.pos-top .ngg-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+}
+
+.ngg-preview-canvas.pos-center { align-items: center; }
+.ngg-preview-canvas.pos-center .ngg-overlay {
+    background: radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 100%);
+}
+
+.ngg-text-container {
+    position: relative;
+    z-index: 2;
+    padding: 60px;
+    width: 100%;
+}
+
+.tiptap-output {
+    color: white; 
+    font-family: 'Inter', sans-serif;
+}
+
+.tiptap-output * {
+    color: inherit; 
+}
+
+.tiptap-output h1 {
+    font-size: 80px; 
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 20px 0;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+}
+
+.tiptap-output h2 {
+    font-size: 55px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 20px 0;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+}
+
+.tiptap-output p {
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.45;
+    margin: 0 0 25px 0;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    white-space: pre-wrap;
+}
+
+.tiptap-output h1:last-child, 
+.tiptap-output h2:last-child, 
+.tiptap-output p:last-child {
+    margin-bottom: 0;
+}
+
+.ngg-drone-view {
+    display: none; 
+    margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+    .ngg-drone-view {
+        display: block; 
+    }
+}
+
+.ngg-drone-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+    margin-top: 0;
+}
+
+.ngg-drone-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+}
+
+.ngg-drone-item {
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.ngg-drone-item:hover {
+    transform: translateY(-2px);
+}
+
+.ngg-drone-thumbnail {
+    width: 100%;
+    aspect-ratio: 4/5; 
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid var(--border-muted);
+    background-color: #0f172a;
+}
+
+.ngg-drone-item-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s;
+}
+
+.ngg-drone-item:hover .ngg-drone-item-overlay {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.ngg-drone-number {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background-color: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.ngg-drone-item.active .ngg-drone-thumbnail {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.ngg-drone-active-ring {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 3px solid #6366f1;
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+.ngg-drone-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ngg-drone-item.active .ngg-drone-label {
+    color: #818cf8;
+    font-weight: 600;
+}
